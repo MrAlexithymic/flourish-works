@@ -79,7 +79,7 @@ const Index = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold text-primary">${totalSpent}</p>
+                <p className="text-2xl font-bold text-primary">₹{totalSpent}</p>
               </div>
             </div>
           </Card>
@@ -91,7 +91,7 @@ const Index = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Remaining Budget</p>
-                <p className="text-2xl font-bold text-success">${remainingBudget}</p>
+                <p className="text-2xl font-bold text-success">₹{remainingBudget}</p>
               </div>
             </div>
           </Card>
@@ -115,7 +115,7 @@ const Index = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Monthly Goal</p>
-                <p className="text-2xl font-bold text-accent">${monthlyBudget}</p>
+                <p className="text-2xl font-bold text-accent">₹{monthlyBudget}</p>
               </div>
             </div>
           </Card>

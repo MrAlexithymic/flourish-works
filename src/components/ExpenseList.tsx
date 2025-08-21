@@ -64,7 +64,7 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <DollarSign className="w-4 h-4" />
-            Total: ${expenses.reduce((sum, exp) => sum + exp.amount, 0)}
+            Total: ₹{expenses.reduce((sum, exp) => sum + exp.amount, 0)}
           </div>
         </div>
         
@@ -110,7 +110,7 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
                   
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-semibold text-primary">
-                      ${expense.amount}
+                      ₹{expense.amount}
                     </span>
                     
                     {onDeleteExpense && (
@@ -135,13 +135,13 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-primary">
-                  ${(expenses.reduce((sum, exp) => sum + exp.amount, 0) / Math.max(1, expenses.length)).toFixed(0)}
+                  ₹{(expenses.reduce((sum, exp) => sum + exp.amount, 0) / Math.max(1, expenses.length)).toFixed(0)}
                 </p>
                 <p className="text-sm text-muted-foreground">Avg per expense</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-success">
-                  ${expenses.reduce((sum, exp) => sum + exp.amount, 0)}
+                  ₹{expenses.reduce((sum, exp) => sum + exp.amount, 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">Total spent</p>
               </div>

@@ -125,7 +125,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
     // Simulate AI processing to extract expense data
     setTimeout(() => {
       // Simple parsing simulation
-      const amountMatch = transcript.match(/(\d+)\s*dollars?/i);
+      const amountMatch = transcript.match(/(\d+)\s*(?:rupees?|₹)/i);
       const amount = amountMatch ? parseInt(amountMatch[1]) : 0;
       
       let category = "Other";
@@ -149,7 +149,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         
         toast({
           title: "Expense Added! 🎉",
-          description: `$${amount} logged for ${category}`,
+          description: `₹${amount} logged for ${category}`,
         });
         
         setTranscript("");
@@ -222,7 +222,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         
         <div className="text-xs text-muted-foreground">
           {isSupported ? (
-            <>💡 Try saying: "I spent 25 dollars on lunch" or "Paid 60 dollars for gas"</>
+            <>💡 Try saying: "I spent 25 rupees on lunch" or "Paid 60 rupees for gas"</>
           ) : (
             <>🔧 Use Chrome, Safari, or Edge with microphone access for voice input</>
           )}

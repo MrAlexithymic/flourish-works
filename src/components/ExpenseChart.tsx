@@ -63,7 +63,7 @@ export const ExpenseChart = ({ expenses }: ExpenseChartProps) => {
           <div>
             <h3 className="text-lg font-semibold">Spending by Category</h3>
             <p className="text-2xl font-bold text-primary">
-              ${totalSpent.toLocaleString()}
+              ₹{totalSpent.toLocaleString()}
             </p>
             <p className="text-sm text-muted-foreground">Total spent this month</p>
           </div>
@@ -85,7 +85,7 @@ export const ExpenseChart = ({ expenses }: ExpenseChartProps) => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                  <Tooltip formatter={(value) => [`₹${value}`, 'Amount']} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -105,7 +105,7 @@ export const ExpenseChart = ({ expenses }: ExpenseChartProps) => {
                   />
                   <span className="text-sm">{item.name}</span>
                 </div>
-                <span className="text-sm font-medium">${item.value}</span>
+                <span className="text-sm font-medium">₹{item.value}</span>
               </div>
             ))}
           </div>
@@ -126,7 +126,7 @@ export const ExpenseChart = ({ expenses }: ExpenseChartProps) => {
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
                 <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Spent']}
+                  formatter={(value) => [`₹${value}`, 'Spent']}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                   contentStyle={{
                     backgroundColor: 'hsl(var(--popover))',

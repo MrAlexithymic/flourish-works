@@ -52,23 +52,23 @@ export const AIAdvisor = ({ expenses }: AIAdvisorProps) => {
     
     if (lowerInput.includes('spending') || lowerInput.includes('analysis')) {
       if (totalSpent > 0) {
-        response = `Based on your recent expenses of $${totalSpent}, I notice you spend most on ${topCategory?.[0] || 'various categories'} ($${topCategory?.[1] || 0}). Consider setting a monthly budget of $${Math.round(totalSpent * 1.2)} to allow for some flexibility while maintaining control.`;
+        response = `Based on your recent expenses of ₹${totalSpent}, I notice you spend most on ${topCategory?.[0] || 'various categories'} (₹${topCategory?.[1] || 0}). Consider setting a monthly budget of ₹${Math.round(totalSpent * 1.2)} to allow for some flexibility while maintaining control.`;
         category = 'insight';
       } else {
         response = "I don't see any expenses logged yet. Start tracking your spending with voice input to get personalized insights!";
       }
     } else if (lowerInput.includes('save') || lowerInput.includes('budget')) {
-      response = `To improve your savings, try the 50/30/20 rule: 50% for needs, 30% for wants, 20% for savings. Based on your current spending of $${totalSpent}, aim to save at least $${Math.round(totalSpent * 0.4)} monthly.`;
+      response = `To improve your savings, try the 50/30/20 rule: 50% for needs, 30% for wants, 20% for savings. Based on your current spending of ₹${totalSpent}, aim to save at least ₹${Math.round(totalSpent * 0.4)} monthly.`;
       category = 'recommendation';
     } else if (lowerInput.includes('goal') || lowerInput.includes('plan')) {
-      response = `Let's set up a savings goal! For a $10,000 emergency fund, you'd need to save $833 monthly for 12 months. I can help you track progress and adjust your spending accordingly.`;
+      response = `Let's set up a savings goal! For a ₹8,00,000 emergency fund, you'd need to save ₹66,667 monthly for 12 months. I can help you track progress and adjust your spending accordingly.`;
       category = 'goal';
     } else if (lowerInput.includes('invest') || lowerInput.includes('sip')) {
-      response = `Consider starting a SIP (Systematic Investment Plan) with $200-500 monthly. Based on your spending patterns, you could potentially invest $${Math.round(totalSpent * 0.3)} per month in diversified mutual funds for long-term wealth creation.`;
+      response = `Consider starting a SIP (Systematic Investment Plan) with ₹15,000-40,000 monthly. Based on your spending patterns, you could potentially invest ₹${Math.round(totalSpent * 0.3)} per month in diversified mutual funds for long-term wealth creation.`;
       category = 'recommendation';
     } else if (lowerInput.includes('reduce') || lowerInput.includes('cut')) {
       if (topCategory && topCategory[1] > 200) {
-        response = `I notice you're spending $${topCategory[1]} on ${topCategory[0]}. Try reducing this by 10-15% by finding alternatives or planning ahead. This could save you $${Math.round(topCategory[1] * 0.12)} monthly!`;
+        response = `I notice you're spending ₹${topCategory[1]} on ${topCategory[0]}. Try reducing this by 10-15% by finding alternatives or planning ahead. This could save you ₹${Math.round(topCategory[1] * 0.12)} monthly!`;
         category = 'warning';
       } else {
         response = "Your spending seems reasonable. Focus on increasing income sources or small daily savings like brewing coffee at home instead of buying it.";
