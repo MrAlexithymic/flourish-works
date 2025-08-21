@@ -1,9 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Send } from "lucide-react";
+import { Mic, MicOff, Send, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Type declarations for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 interface VoiceInputProps {
   onExpenseAdd: (expense: {
@@ -18,30 +26,94 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
   const { toast } = useToast();
+  const recognitionRef = useRef<any>(null);
 
-  // Simulate voice input since we can't use real speech API without backend
-  const startListening = () => {
-    setIsListening(true);
-    setTranscript("Listening...");
+  useEffect(() => {
+    // Check if speech recognition is supported
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    // Simulate voice processing
-    setTimeout(() => {
-      const sampleInputs = [
-        "I spent 25 dollars on lunch at Subway",
-        "Dinner cost me 45 dollars at the Italian restaurant", 
-        "Paid 8 dollars for coffee this morning",
-        "Gas station bill was 60 dollars",
-        "Grocery shopping came to 120 dollars"
-      ];
-      
-      const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
-      setTranscript(randomInput);
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setTranscript("Listening...");
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      setTranscript(finalTranscript || interimTranscript);
+    };
+
+    recognition.onend = () => {
       setIsListening(false);
-    }, 2000);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      
+      if (event.error === 'not-allowed') {
+        toast({
+          title: "Microphone Access Denied",
+          description: "Please allow microphone access to use voice input.",
+          variant: "destructive",
+        });
+      } else if (event.error === 'no-speech') {
+        toast({
+          title: "No Speech Detected",
+          description: "Please try speaking again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Speech Recognition Error",
+          description: "Please try again or check your microphone.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, [toast]);
+
+  const startListening = () => {
+    if (!recognitionRef.current || !isSupported) return;
+    
+    setTranscript("");
+    recognitionRef.current.start();
   };
 
   const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
     setIsListening(false);
   };
 
@@ -94,20 +166,29 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
           <div>
             <h3 className="text-lg font-semibold">Voice Expense Logger</h3>
             <p className="text-sm text-muted-foreground">
-              Speak to log your expenses instantly
+              {isSupported ? "Speak to log your expenses instantly" : "Speech recognition not supported in this browser"}
             </p>
           </div>
-          <Badge variant={isListening ? "destructive" : "secondary"}>
-            {isListening ? "Listening..." : "Ready"}
+          <Badge variant={!isSupported ? "outline" : isListening ? "destructive" : "secondary"}>
+            {!isSupported ? "Unavailable" : isListening ? "Listening..." : "Ready"}
           </Badge>
         </div>
+        
+        {!isSupported && (
+          <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-warning" />
+            <p className="text-sm text-warning">
+              Voice input requires Chrome, Safari, or Edge browser with microphone permissions.
+            </p>
+          </div>
+        )}
         
         <div className="min-h-[80px] p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border">
           {transcript ? (
             <p className="text-sm">{transcript}</p>
           ) : (
             <p className="text-sm text-muted-foreground italic">
-              Your voice input will appear here...
+              {isSupported ? "Your voice input will appear here..." : "Voice input not available"}
             </p>
           )}
         </div>
@@ -117,7 +198,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
             onClick={isListening ? stopListening : startListening}
             variant={isListening ? "destructive" : "default"}
             className="flex-1"
-            disabled={isProcessing}
+            disabled={isProcessing || !isSupported}
           >
             {isListening ? <MicOff className="w-4 h-4 mr-2" /> : <Mic className="w-4 h-4 mr-2" />}
             {isListening ? "Stop Listening" : "Start Listening"}
@@ -126,7 +207,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
           {transcript && !isListening && (
             <Button
               onClick={processTranscript}
-              disabled={isProcessing}
+              disabled={isProcessing || !isSupported}
               className="gradient-primary"
             >
               {isProcessing ? (
@@ -140,7 +221,11 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         </div>
         
         <div className="text-xs text-muted-foreground">
-          💡 Try saying: "I spent 25 dollars on lunch" or "Paid 60 dollars for gas"
+          {isSupported ? (
+            <>💡 Try saying: "I spent 25 dollars on lunch" or "Paid 60 dollars for gas"</>
+          ) : (
+            <>🔧 Use Chrome, Safari, or Edge with microphone access for voice input</>
+          )}
         </div>
       </div>
     </Card>
