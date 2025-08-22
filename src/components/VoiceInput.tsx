@@ -18,7 +18,7 @@ interface VoiceInputProps {
     amount: number;
     category: string;
     description: string;
-    date: string;
+    expense_date: string;
   }) => void;
 }
 
@@ -184,10 +184,10 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         }
         
         onExpenseAdd({
-          amount,
-          category,
+          amount: amount,
+          category: category,
           description: cleanDescription,
-          date: new Date().toISOString().split('T')[0]
+          expense_date: new Date().toISOString().split('T')[0]
         });
         
         toast({

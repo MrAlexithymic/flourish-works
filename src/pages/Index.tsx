@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { VoiceInput } from "@/components/VoiceInput";
 import { ExpenseChart } from "@/components/ExpenseChart";
 import { AIAdvisor } from "@/components/AIAdvisor";
@@ -7,47 +8,77 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, DollarSign, Target, Mic, Edit3, Check, X } from "lucide-react";
-
-interface ExpenseData {
-  amount: number;
-  category: string;
-  description: string;
-  date: string;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { useExpenses, ExpenseData } from "@/hooks/useExpenses";
+import { useProfile } from "@/hooks/useProfile";
+import { TrendingUp, TrendingDown, DollarSign, Target, Mic, Edit3, Check, X, LogOut, Loader2 } from "lucide-react";
 
 const Index = () => {
-  const [expenses, setExpenses] = useState<ExpenseData[]>([
-    {
-      amount: 25,
-      category: "Food",
-      description: "Lunch at Subway",
-      date: new Date().toISOString().split('T')[0]
-    },
-    {
-      amount: 60,
-      category: "Transport", 
-      description: "Gas station fill-up",
-      date: new Date(Date.now() - 86400000).toISOString().split('T')[0]
-    },
-    {
-      amount: 120,
-      category: "Groceries",
-      description: "Weekly grocery shopping",
-      date: new Date(Date.now() - 172800000).toISOString().split('T')[0]
-    }
-  ]);
-  const [monthlyBudget, setMonthlyBudget] = useState(2000);
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { expenses, loading: expensesLoading, addExpense, deleteExpense } = useExpenses();
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [tempBudget, setTempBudget] = useState(2000);
 
-  const addExpense = (newExpense: ExpenseData) => {
-    setExpenses(prev => [...prev, newExpense]);
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (profile) {
+      setTempBudget(profile.monthly_budget);
+    }
+  }, [profile]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
-  const deleteExpense = (index: number) => {
-    setExpenses(prev => prev.filter((_, i) => i !== index));
+  const handleBudgetSave = () => {
+    if (profile && tempBudget !== profile.monthly_budget) {
+      updateProfile({ monthly_budget: tempBudget });
+    }
+    setIsEditingBudget(false);
   };
 
+  const handleBudgetCancel = () => {
+    if (profile) {
+      setTempBudget(profile.monthly_budget);
+    }
+    setIsEditingBudget(false);
+  };
+
+  const handleAddExpense = (newExpense: Omit<ExpenseData, 'id' | 'created_at'>) => {
+    addExpense({
+      ...newExpense,
+      expense_date: newExpense.expense_date || new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    deleteExpense(id);
+  };
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect to auth
+  }
+
+  const monthlyBudget = profile?.monthly_budget || 2000;
   const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const remainingBudget = monthlyBudget - totalSpent;
   const spendingRate = (totalSpent / monthlyBudget) * 100;
@@ -62,11 +93,25 @@ const Index = () => {
               <h1 className="text-3xl font-bold mb-2">FinVoice</h1>
               <p className="text-white/90">AI-Powered Financial Management & Advisory</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Mic className="w-5 h-5" />
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                Voice Enabled
-              </Badge>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Welcome, {profile?.display_name || user?.email?.split('@')[0]}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="text-white hover:bg-white/20"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mic className="w-5 h-5" />
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  Voice Enabled
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
@@ -122,14 +167,14 @@ const Index = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <Input
                       type="number"
-                      value={monthlyBudget}
-                      onChange={(e) => setMonthlyBudget(Number(e.target.value))}
+                      value={tempBudget}
+                      onChange={(e) => setTempBudget(Number(e.target.value))}
                       className="h-8 w-24 text-lg font-bold"
                     />
-                    <Button size="sm" variant="ghost" onClick={() => setIsEditingBudget(false)}>
+                    <Button size="sm" variant="ghost" onClick={handleBudgetSave}>
                       <Check className="w-4 h-4 text-success" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setIsEditingBudget(false)}>
+                    <Button size="sm" variant="ghost" onClick={handleBudgetCancel}>
                       <X className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
@@ -152,14 +197,14 @@ const Index = () => {
         </div>
 
         {/* Voice Input */}
-        <VoiceInput onExpenseAdd={addExpense} />
+        <VoiceInput onExpenseAdd={handleAddExpense} />
 
         {/* Charts */}
         <ExpenseChart expenses={expenses} />
 
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ExpenseList expenses={expenses} onDeleteExpense={deleteExpense} />
+          <ExpenseList expenses={expenses} onDeleteExpense={handleDeleteExpense} loading={expensesLoading} />
           <AIAdvisor expenses={expenses} />
         </div>
       </div>

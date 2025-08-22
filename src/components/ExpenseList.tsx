@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, Calendar, DollarSign } from "lucide-react";
 
-interface ExpenseData {
-  amount: number;
-  category: string;
-  description: string;
-  date: string;
-}
-
 interface ExpenseListProps {
-  expenses: ExpenseData[];
-  onDeleteExpense?: (index: number) => void;
+  expenses: Array<{
+    id?: string;
+    amount: number;
+    category: string;
+    description: string;
+    expense_date: string;
+  }>;
+  onDeleteExpense: (id: string) => void;
+  loading?: boolean;
 }
 
 const categoryIcons = {
@@ -21,6 +21,8 @@ const categoryIcons = {
   Transport: "🚗",
   Groceries: "🛒",
   Entertainment: "🎬",
+  Healthcare: "🏥",
+  Utilities: "💡",
   Bills: "📄",
   Other: "💼"
 };
@@ -30,12 +32,14 @@ const categoryColors = {
   Transport: "bg-green-100 text-green-800 border-green-200",
   Groceries: "bg-yellow-100 text-yellow-800 border-yellow-200",
   Entertainment: "bg-purple-100 text-purple-800 border-purple-200",
-  Bills: "bg-red-100 text-red-800 border-red-200",
+  Healthcare: "bg-red-100 text-red-800 border-red-200",
+  Utilities: "bg-orange-100 text-orange-800 border-orange-200",
+  Bills: "bg-gray-100 text-gray-800 border-gray-200",
   Other: "bg-gray-100 text-gray-800 border-gray-200"
 };
 
-export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => {
-  const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+export const ExpenseList = ({ expenses, onDeleteExpense, loading }: ExpenseListProps) => {
+  const sortedExpenses = [...expenses].sort((a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime());
   
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -69,7 +73,14 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
         </div>
         
         <ScrollArea className="h-[400px] pr-4">
-          {sortedExpenses.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <DollarSign className="w-8 h-8 text-muted-foreground animate-pulse" />
+              </div>
+              <p className="text-muted-foreground">Loading expenses...</p>
+            </div>
+          ) : sortedExpenses.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                 <DollarSign className="w-8 h-8 text-muted-foreground" />
@@ -81,9 +92,9 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
             </div>
           ) : (
             <div className="space-y-3">
-              {sortedExpenses.map((expense, index) => (
+              {sortedExpenses.map((expense) => (
                 <div 
-                  key={index}
+                  key={expense.id || `expense-${expense.description}-${expense.amount}`}
                   className="flex items-center justify-between p-4 rounded-lg border bg-card-elevated transition-smooth hover:shadow-soft"
                 >
                   <div className="flex items-center gap-3 flex-1">
@@ -102,7 +113,7 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
                         </Badge>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="w-3 h-3" />
-                          {formatDate(expense.date)}
+                          {formatDate(expense.expense_date)}
                         </div>
                       </div>
                     </div>
@@ -113,11 +124,11 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
                       ₹{expense.amount}
                     </span>
                     
-                    {onDeleteExpense && (
+                    {expense.id && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDeleteExpense(index)}
+                        onClick={() => onDeleteExpense(expense.id!)}
                         className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
