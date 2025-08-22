@@ -16,11 +16,10 @@ interface Message {
 
 interface AIAdvisorProps {
   expenses: Array<{
-    id?: string;
     amount: number;
     category: string;
     description: string;
-    expense_date: string;
+    date: string;
   }>;
 }
 
