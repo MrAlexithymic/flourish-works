@@ -5,7 +5,9 @@ import { AIAdvisor } from "@/components/AIAdvisor";
 import { ExpenseList } from "@/components/ExpenseList";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Target, Mic } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, DollarSign, Target, Mic, Edit3, Check, X } from "lucide-react";
 
 interface ExpenseData {
   amount: number;
@@ -35,6 +37,8 @@ const Index = () => {
       date: new Date(Date.now() - 172800000).toISOString().split('T')[0]
     }
   ]);
+  const [monthlyBudget, setMonthlyBudget] = useState(2000);
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   const addExpense = (newExpense: ExpenseData) => {
     setExpenses(prev => [...prev, newExpense]);
@@ -45,7 +49,6 @@ const Index = () => {
   };
 
   const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const monthlyBudget = 2000;
   const remainingBudget = monthlyBudget - totalSpent;
   const spendingRate = (totalSpent / monthlyBudget) * 100;
 
@@ -113,9 +116,36 @@ const Index = () => {
               <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
                 <Target className="w-6 h-6 text-accent" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Monthly Goal</p>
-                <p className="text-2xl font-bold text-accent">₹{monthlyBudget}</p>
+                {isEditingBudget ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="number"
+                      value={monthlyBudget}
+                      onChange={(e) => setMonthlyBudget(Number(e.target.value))}
+                      className="h-8 w-24 text-lg font-bold"
+                    />
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditingBudget(false)}>
+                      <Check className="w-4 h-4 text-success" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditingBudget(false)}>
+                      <X className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold text-accent">₹{monthlyBudget}</p>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setIsEditingBudget(true)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </Card>

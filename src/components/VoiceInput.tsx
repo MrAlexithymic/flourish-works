@@ -122,28 +122,71 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
     
     setIsProcessing(true);
     
-    // Simulate AI processing to extract expense data
+    // Enhanced AI processing to extract expense data
     setTimeout(() => {
-      // Simple parsing simulation
-      const amountMatch = transcript.match(/(\d+)\s*(?:rupees?|₹)/i);
-      const amount = amountMatch ? parseInt(amountMatch[1]) : 0;
+      // Multiple patterns for amount detection
+      const amountPatterns = [
+        /(\d+(?:\.\d{1,2})?)\s*(?:rupees?|₹|rs\.?|inr)/i,
+        /(?:spent|paid|cost|worth)\s*(?:about|around)?\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)/i,
+        /(?:₹|rs\.?|inr)\s*(\d+(?:\.\d{1,2})?)/i,
+        /(\d+(?:\.\d{1,2})?)\s*(?:dollars?|\$)/i, // Handle dollar mentions
+        /(\d+(?:\.\d{1,2})?)\s*(?:bucks?)/i
+      ];
       
+      let amount = 0;
+      for (const pattern of amountPatterns) {
+        const match = transcript.match(pattern);
+        if (match) {
+          amount = parseFloat(match[1]);
+          break;
+        }
+      }
+      
+      // Enhanced category detection with more patterns
       let category = "Other";
-      if (transcript.toLowerCase().includes("lunch") || transcript.toLowerCase().includes("dinner") || transcript.toLowerCase().includes("food")) {
+      const text = transcript.toLowerCase();
+      
+      // Food categories
+      if (text.match(/\b(lunch|dinner|breakfast|food|meal|eat|restaurant|cafe|pizza|burger|sandwich|snack|coffee|tea|starbucks|mcdonalds|kfc|dominos)\b/)) {
         category = "Food";
-      } else if (transcript.toLowerCase().includes("gas") || transcript.toLowerCase().includes("fuel")) {
+      }
+      // Transport categories  
+      else if (text.match(/\b(gas|fuel|petrol|diesel|uber|ola|taxi|bus|train|metro|auto|rickshaw|transport|travel|parking)\b/)) {
         category = "Transport";
-      } else if (transcript.toLowerCase().includes("coffee") || transcript.toLowerCase().includes("starbucks")) {
-        category = "Food";
-      } else if (transcript.toLowerCase().includes("grocery") || transcript.toLowerCase().includes("shopping")) {
+      }
+      // Groceries categories
+      else if (text.match(/\b(grocery|groceries|shopping|supermarket|vegetables|fruits|milk|bread|market|store|buy|bought)\b/)) {
         category = "Groceries";
+      }
+      // Entertainment categories
+      else if (text.match(/\b(movie|cinema|entertainment|game|book|music|netflix|spotify|youtube|subscription)\b/)) {
+        category = "Entertainment";
+      }
+      // Healthcare categories
+      else if (text.match(/\b(doctor|hospital|medicine|pharmacy|health|medical|dentist|clinic)\b/)) {
+        category = "Healthcare";
+      }
+      // Utilities categories
+      else if (text.match(/\b(electricity|water|internet|phone|mobile|recharge|bill|utility)\b/)) {
+        category = "Utilities";
       }
       
       if (amount > 0) {
+        // Clean up description by removing amount mentions
+        let cleanDescription = transcript;
+        for (const pattern of amountPatterns) {
+          cleanDescription = cleanDescription.replace(pattern, '').trim();
+        }
+        // Remove common filler words from start
+        cleanDescription = cleanDescription.replace(/^(i\s+)?(spent|paid|bought|got)\s*/i, '').trim();
+        if (!cleanDescription) {
+          cleanDescription = `${category} expense`;
+        }
+        
         onExpenseAdd({
           amount,
           category,
-          description: transcript,
+          description: cleanDescription,
           date: new Date().toISOString().split('T')[0]
         });
         
@@ -153,10 +196,16 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         });
         
         setTranscript("");
+      } else {
+        toast({
+          title: "Amount Not Detected",
+          description: "Please mention the amount in rupees (e.g., '50 rupees' or '₹50')",
+          variant: "destructive",
+        });
       }
       
       setIsProcessing(false);
-    }, 1500);
+    }, 1000);
   };
 
   return (
@@ -222,7 +271,7 @@ export const VoiceInput = ({ onExpenseAdd }: VoiceInputProps) => {
         
         <div className="text-xs text-muted-foreground">
           {isSupported ? (
-            <>💡 Try saying: "I spent 25 rupees on lunch" or "Paid 60 rupees for gas"</>
+            <>💡 Try: "I spent 25 rupees on lunch", "Paid 60 for gas", "Bought groceries worth ₹150"</>
           ) : (
             <>🔧 Use Chrome, Safari, or Edge with microphone access for voice input</>
           )}
